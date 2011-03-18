@@ -306,6 +306,54 @@ function uuid_comment(&$a1, $op) {
 }
 
 /**
+ * Implementation of hook_file_insert().
+ *
+ * Support for filefields files.
+ */
+function uuid_file_insert(&$file) {
+  if (variable_get('uuid_automatic_for_filefield', FALSE)) {
+    _uuid_file_insert_uuid($file);
+  }
+}
+
+/**
+ * Implementation of hook_file_update().
+ *
+ * Support for filefields files.
+ */
+function uuid_file_update(&$file) {
+  if (variable_get('uuid_automatic_for_filefield', FALSE)) {
+    if (!db_result(db_query("SELECT fid FROM {uuid_files} WHERE fid = %d", $file->fid))) {
+      _uuid_file_insert_uuid($file);
+    }
+  }
+}
+
+/**
+ * Implementation of hook_file_delete().
+ *
+ * Support for filefields files.
+ */
+function uuid_file_delete($file) {
+  if (variable_get('uuid_automatic_for_filefield', FALSE)) {
+    db_query("DELETE FROM {uuid_files} WHERE fid = %d", $file->fid);
+  }
+}
+
+/**
+ * Insert the uid for a file.
+ */
+function _uuid_file_insert_uuid(&$file) {
+  if ($file->fid && $file->status) {
+    $uuid = uuid_uuid();
+    db_query("INSERT INTO {uuid_files} (fid, uuid) VALUES (%d, '%s')",
+      $file->fid, $uuid);
+
+    $file->uuid = $uuid;
+  }
+}
+
+/**
  * Determines if a UUID is valid.
  */
 function uuid_is_valid($uuid) {

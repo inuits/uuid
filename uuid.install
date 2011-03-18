@@ -32,6 +32,7 @@ function uuid_schema() {
     'uuid_vocabulary' => uuid_table_schema('vocabulary', 'vid'),
     'uuid_term_data' => uuid_table_schema('term_data', 'tid'),
     'uuid_comments' => uuid_table_schema('comments', 'cid'),
+    'uuid_files' => uuid_table_schema('files', 'fid'),
   );
   // The uuid_node_revisions table requires an additional column (node id) to
   // support revision deletion upon node delete. No index is needed on this
@@ -90,6 +91,7 @@ function uuid_uninstall() {
   variable_del('uuid_automatic_for_users');
   variable_del('uuid_automatic_for_taxonomy');
   variable_del('uuid_automatic_for_comments');
+  variable_del('uuid_automatic_for_filefield');
 
   // Remove tables.
   drupal_uninstall_schema('uuid');
@@ -179,6 +181,17 @@ function uuid_update_6005() {
     // Delete any orphaned revision vid, uuid pairs.
     $ret[] = update_sql('DELETE FROM {uuid_node_revisions} WHERE nid=0');
   }
+
+  return $ret;
+}
+
+/**
+ * Create uuid_files table.
+ */
+function uuid_update_6006() {
+  $ret = array();
+
+  db_create_table($ret, 'uuid_files', uuid_table_schema('files', 'fid'));
 
   return $ret;
 }

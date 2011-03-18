@@ -79,6 +79,23 @@ function uuid_admin() {
     '#description' => t('Should UUIDs be created automatically for comments?'),
   );
 
+  if (module_exists('filefield')) {
+    $form['files'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Files settings'),
+    );
+    $form['files']['uuid_automatic_for_filefield'] = array(
+      '#type' => 'radios',
+      '#title' => t('Automatic UUID generation for filefield  files'),
+      '#default_value' => variable_get('uuid_automatic_for_filefield', FALSE),
+      '#options' => array(
+         TRUE => t('Enabled'),
+         FALSE => t('Disabled'),
+      ),
+      '#description' => t('Should UUIDs be created automatically for filefield uploaded files?'),
+    );
+  }
+
   $form['settings'] = array(
     '#type' => 'fieldset',
     '#title' => t('Synchronization'),
@@ -150,6 +167,14 @@ function uuid_sync() {
     $result = db_query("SELECT td.tid FROM {term_data} AS td WHERE td.vid IN (" . $placeholders . ") AND NOT EXISTS (SELECT tid FROM {uuid_term_data} WHERE tid = td.tid)", $vids);
     while ($item = db_fetch_object($result)) {
       db_query("INSERT INTO {uuid_term_data} (tid, uuid) VALUES(%d, '%s')", $item->tid, uuid_uuid());
+    }
+  }
+
+  // Files
+  if (variable_get('uuid_automatic_for_filefield', FALSE)) {
+    $result = db_query("SELECT f.fid, f.status FROM {files} f LEFT JOIN {uuid_files} uf ON f.fid = uf.fid WHERE f.status = 1 AND uf.fid IS NULL");
+    while ($item = db_fetch_object($result)) {
+      _uuid_file_insert_uuid($item);
     }
   }
 
